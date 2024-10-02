@@ -1,0 +1,185 @@
+---
+
+################################
+# CHECK
+################################
+
+- name: Ombi builtin fail
+  when: not ombi_is_enabled
+  ansible.builtin.fail:
+    msg: 'Ombi role is being run but one or multiple Ombi variables are empty. Check the defaults folder.'
+
+################################
+# DEPENDENCIES
+################################
+
+- name: Install prerequisite apt packages
+  ansible.builtin.apt:
+    pkg:
+      - python3-requests
+      - python3-lxml
+    update_cache: true
+
+- name: Install collection requirements
+  community.general.ansible_galaxy_install:
+    type: collection
+    requirements_file: '{{ role_path }}/requirements.yml'
+
+################################
+# DOCKER
+################################
+
+- name: Apt install docker if required
+  when: ansible_os_family == 'Debian'
+  block:
+    - name: Gather apt facts
+      ansible.builtin.package_facts:
+        manager: apt
+
+    - name: Include docker install tasks
+      when: '"docker-ce" not in ansible_facts.packages'
+      ansible.builtin.include_tasks: 'sub_tasks/docker.yml'
+
+################################
+# CLEAN UP
+################################
+
+- name: Register ombi container
+  community.docker.docker_container_info:
+    name: '{{ ombi_basics_name }}'
+  register: ombi_existing_container_result
+
+- name: Remove existing ombi container
+  when: ombi_existing_container_result.exists
+  community.docker.docker_container:
+    container_default_behavior: compatibility
+    name: '{{ ombi_basics_name }}'
+    state: absent
+    stop_timeout: 10
+  register: remove_ombi_docker
+  retries: 5
+  delay: 10
+  until: remove_ombi_docker is succeeded
+
+################################
+# BACKEND NETWORK
+################################
+
+- name: Conduct backend network tasks
+  when: ombi_network_backend_is_enabled
+  block:
+    - name: Register ombi backend network
+      community.docker.docker_network_info:
+        name: '{{ ombi_network_backend }}'
+      register: ombi_net_backend_result
+
+    - name: Ombi network backend builtin fail
+      ansible.builtin.fail:
+        msg: ombi backend network does not exist nor is it enabled. Ensure the ombi backend network variables contain valid entries.
+      when:
+        - not ombi_net_backend_result.exists
+        - not ombi_network_backend_is_enabled
+
+    - name: Create ombi backend network
+      when:
+        - not ombi_net_backend_result.exists
+        - ombi_network_backend_is_enabled
+      community.docker.docker_network:
+        name: '{{ ombi_network_backend }}'
+        driver: '{{ ombi_network_backend_driver }}'
+        ipam_config:
+          - subnet: '{{ ombi_network_backend_subnet }}'
+
+################################
+# APPDATA
+################################
+
+- name: Create ombi appdata directory
+  ansible.builtin.file:
+    path: '{{ ombi_paths_location }}'
+    state: directory
+    owner: '{{ ombi_env_puid }}'
+    group: '{{ ombi_env_pgid }}'
+    mode: '0755'
+
+################################
+# MARIADB
+################################
+
+- name: Include mariadb container tasks
+  when: ombi_mariadb_is_enabled
+  ansible.builtin.include_tasks: 'mariadb/mariadb_container.yml'
+
+- name: Include mariadb database tasks
+  when: ombi_mariadb_is_enabled
+  ansible.builtin.include_tasks: 'mariadb/mariadb_database_json.yml'
+
+################################
+# TRAEFIK
+################################
+
+- name: Conduct traefik tasks
+  when: ombi_traefik_is_enabled
+  block:
+    - name: Register traefik network
+      community.docker.docker_network_info:
+        name: '{{ ombi_traefik_network }}'
+      register: ombi_traefik_network_result
+
+    - name: Traefik builtin fail
+      when:
+        - not ombi_traefik_network_is_enabled
+        - not ombi_traefik_network_result.exists
+      ansible.builtin.fail:
+        msg: Traefik network does not exist nor is it enabled. Ensure the Traefik network variables contain valid entries.
+
+    - name: Create traefik network
+      when: not ombi_traefik_network_result.exists
+      community.docker.docker_network:
+        name: '{{ ombi_traefik_network }}'
+        driver: '{{ ombi_traefik_network_driver }}'
+        ipam_config:
+          - subnet: '{{ ombi_traefik_network_subnet }}'
+
+################################
+# CLOUDFLARE
+################################
+
+- name: Include cloudflare tasks
+  when: ombi_cloudflare_is_enabled
+  ansible.builtin.include_tasks: 'sub_tasks/cloudflare.yml'
+
+################################
+# CONTAINER
+################################
+
+- name: Create ombi container
+  when: not ombi_traefik_is_enabled
+  community.docker.docker_container:
+    name: '{{ ombi_basics_name }}'
+    image: '{{ ombi_basics_image_repo }}:{{ ombi_basics_image_tag }}'
+    networks: '{{ ombi_docker_networks }}'
+    env:
+      PUID: '{{ ombi_env_puid }}'
+      PGID: '{{ ombi_env_pgid }}'
+      TZ: '{{ ombi_env_timezone }}'
+    ports:
+      - '{{ ombi_ports_host }}:{{ ombi_ports_cont }}'
+    volumes: '{{ ombi_bind_mount }}'
+    restart_policy: '{{ ombi_basics_restart_policy }}'
+
+- name: Create ombi traefik container
+  when: ombi_traefik_is_enabled
+  community.docker.docker_container:
+    name: '{{ ombi_basics_name }}'
+    image: '{{ ombi_basics_image_repo }}:{{ ombi_basics_image_tag }}'
+    networks: '{{ ombi_docker_networks }}'
+    env:
+      PUID: '{{ ombi_env_puid }}'
+      PGID: '{{ ombi_env_pgid }}'
+      TZ: '{{ ombi_env_timezone }}'
+    labels: '{{ ombi_traefik_labels }}'
+    ports:
+      - '{{ ombi_ports_host }}:{{ ombi_ports_cont }}'
+    volumes: '{{ ombi_bind_mount }}'
+    restart_policy: '{{ ombi_basics_restart_policy }}'

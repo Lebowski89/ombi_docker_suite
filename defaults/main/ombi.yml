@@ -1,0 +1,68 @@
+---
+
+################################
+# BASICS
+################################
+
+ombi_basics_name: 'ombi'
+ombi_basics_image_repo: 'lscr.io/linuxserver/ombi'
+ombi_basics_image_tag: 'latest'
+ombi_basics_restart_policy: 'unless-stopped'
+
+################################
+# NETWORK
+################################
+
+ombi_network_backend: 'proxy'  ## allows backend docker communication between ombi and companion apps
+ombi_network_backend_driver: ''  ## only required if network doesn't exist
+ombi_network_backend_subnet: ''  ## only required if network doesn't exist
+
+################################
+# ENV
+################################
+
+ombi_env_timezone: ''
+ombi_env_puid: ''
+ombi_env_pgid: ''
+
+################################
+# PORTS
+################################
+
+ombi_ports_host: '3579'
+ombi_ports_cont: '3579'
+
+################################
+# PATHS
+################################
+
+ombi_paths_folder: '{{ ombi_basics_name }}'
+ombi_paths_location: '/opt/{{ ombi_paths_folder }}'
+
+################################
+# BINDS
+################################
+
+ombi_bind_mount:
+  - '{{ ombi_paths_location }}:/config'
+
+################################
+# TRAEFIK
+################################
+
+ombi_traefik_subdomain: '{{ ombi_basics_name }}'
+ombi_traefik_domain:
+ombi_traefik_port: '3579'
+
+  ## traefik docker network
+ombi_traefik_network: 'traefik_proxy'
+ombi_traefik_network_driver: ''  ## only required if network doesn't exist
+ombi_traefik_network_subnet: ''  ## only required if network doesn't exist
+
+################################
+# CLOUDFLARE
+################################
+
+ombi_cloudflare_record_type: 'A'  ## A (IPV4), AAAA (IPV6), CNAME, etc
+ombi_cloudflare_proxy: 'true'  ## true for cloudflare DNS SSL
+ombi_cloudflare_api_token:

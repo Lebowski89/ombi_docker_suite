@@ -1,0 +1,117 @@
+---
+
+################################
+# APPDATA
+################################
+
+- name: Create mariadb appdata directory
+  ansible.builtin.file:
+    path: '{{ ombi_mariadb_paths_location }}'
+    state: directory
+    owner: '{{ ombi_mariadb_env_puid }}'
+    group: '{{ ombi_mariadb_env_pgid }}'
+    mode: '0755'
+
+################################
+# KEYS
+################################
+
+- name: Create mariadb keys directory
+  ansible.builtin.file:
+    path: '{{ ombi_mariadb_paths_keys_location }}'
+    state: directory
+    owner: '{{ ombi_mariadb_env_puid }}'
+    group: '{{ ombi_mariadb_env_pgid }}'
+    mode: '0755'
+
+- name: Check if mariadb_root.txt exists
+  ansible.builtin.stat:
+    path: '{{ ombi_mariadb_paths_keys_location }}/{{ ombi_mariadb_auth_root_password_file }}'
+  register: ombi_mariadb_root_txt
+
+- name: Insert mariadb root password into password file
+  when: not ombi_mariadb_root_txt.stat.exists
+  ansible.builtin.lineinfile:
+    path: '{{ ombi_mariadb_paths_keys_location }}/{{ ombi_mariadb_auth_root_password_file }}'
+    line: '{{ ombi_mariadb_auth_root_password }}'
+    owner: '{{ ombi_mariadb_env_puid }}'
+    group: '{{ ombi_mariadb_env_pgid }}'
+    mode: '0644'
+    create: true
+
+- name: Check if mariadb_ombi.txt exists
+  ansible.builtin.stat:
+    path: '{{ ombi_mariadb_paths_keys_location }}/{{ ombi_mariadb_auth_ombi_db_password_file }}'
+  register: ombi_mariadb_ombi_txt
+
+- name: Insert mariadb ombi password into password file
+  when: not ombi_mariadb_ombi_txt.stat.exists
+  ansible.builtin.lineinfile:
+    path: '{{ ombi_mariadb_paths_keys_location }}/{{ ombi_mariadb_auth_ombi_db_password_file }}'
+    line: '{{ ombi_mariadb_auth_ombi_db_password }}'
+    owner: '{{ ombi_mariadb_env_puid }}'
+    group: '{{ ombi_mariadb_env_pgid }}'
+    mode: '0644'
+    create: true
+
+################################
+# NETWORK
+################################
+
+- name: Register mariadb network
+  community.docker.docker_network_info:
+    name: '{{ ombi_mariadb_network }}'
+  register: ombi_mariadb_network_result
+
+- name: Postgres network builtin fail
+  ansible.builtin.fail:
+    msg: Postgres network does not exist nor is it enabled. Ensure the Postgres network variables contain valid entries.
+  when:
+    - not ombi_mariadb_network_is_enabled
+    - not ombi_mariadb_network_result.exists
+
+- name: Create mariadb network
+  when: not ombi_mariadb_network_result.exists
+  community.docker.docker_network:
+    name: '{{ ombi_mariadb_network }}'
+    driver: '{{ ombi_mariadb_network_driver }}'
+    ipam_config:
+      - subnet: '{{ ombi_mariadb_network_subnet }}'
+
+################################
+# CONTAINER
+################################
+
+- name: Register mariadb container
+  community.docker.docker_container_info:
+    name: '{{ ombi_mariadb_basics_name }}'
+  register: ombi_mariadb_container_result
+
+- name: Create mariadb container
+  when: not ombi_mariadb_container_result.exists
+  community.docker.docker_container:
+    name: '{{ ombi_mariadb_basics_name }}'
+    image: '{{ ombi_mariadb_basics_image_repo }}:{{ ombi_mariadb_basics_image_tag }}'
+    networks:
+      - name: '{{ ombi_mariadb_network }}'
+    env:
+      PUID: '{{ ombi_mariadb_env_puid }}'
+      PGID: '{{ ombi_mariadb_env_pgid }}'
+      TZ: '{{ ombi_mariadb_env_timezone }}'
+      MARIADB_ROOT_PASSWORD_FILE: '/keys/{{ ombi_mariadb_auth_root_password_file }}'
+      MARIADB_DATABASE: '{{ ombi_mariadb_database }}'
+      MARIADB_USER: '{{ ombi_mariadb_auth_ombi_db_user }}'
+      MARIADB_PASSWORD_FILE: '/keys/{{ ombi_mariadb_auth_ombi_db_password_file }}'
+    ports:
+      - '{{ ombi_mariadb_ports_host }}:{{ ombi_mariadb_ports_cont }}'
+    volumes: '{{ ombi_mariadb_binds }}'
+    restart_policy: '{{ ombi_mariadb_basics_restart_policy }}'
+
+- name: Make sure the mariadb container is started
+  community.docker.docker_container:
+    name: '{{ ombi_mariadb_basics_name }}'
+    state: started
+  register: start_ombi_mariadb_docker
+  retries: 5
+  delay: 10
+  until: start_ombi_mariadb_docker is succeeded

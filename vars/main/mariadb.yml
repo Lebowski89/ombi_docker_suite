@@ -1,0 +1,46 @@
+---
+
+################################
+# BASICS
+################################
+
+ombi_mariadb_is_enabled: '{{ (ombi_mariadb_basics_host is defined) and
+                             (ombi_mariadb_basics_host is not none) and
+                             (ombi_mariadb_basics_host | trim | length > 0) and
+                             (ombi_mariadb_env_timezone is defined) and
+                             (ombi_mariadb_env_timezone is not none) and
+                             (ombi_mariadb_env_timezone | trim | length > 0) and
+                             (ombi_mariadb_env_puid is defined) and
+                             (ombi_mariadb_env_puid is not none) and
+                             (ombi_mariadb_env_puid | trim | length > 0) and
+                             (ombi_mariadb_env_pgid is defined) and
+                             (ombi_mariadb_env_pgid is not none) and
+                             (ombi_mariadb_env_pgid | trim | length > 0) and
+                             (ombi_mariadb_auth_root_password is defined) and
+                             (ombi_mariadb_auth_root_password is not none) and
+                             (ombi_mariadb_auth_root_password | trim | length > 0) and
+                             (ombi_mariadb_auth_ombi_db_user is defined) and
+                             (ombi_mariadb_auth_ombi_db_user is not none) and
+                             (ombi_mariadb_auth_ombi_db_user | trim | length > 0) and
+                             (ombi_mariadb_auth_ombi_db_password is defined) and
+                             (ombi_mariadb_auth_ombi_db_password is not none) and
+                             (ombi_mariadb_auth_ombi_db_password | trim | length > 0) }}'
+
+################################
+# NETWORK
+################################
+
+ombi_mariadb_network_is_enabled: '{{ (ombi_mariadb_network_driver is defined) and
+                                     (ombi_mariadb_network_driver is not none) and
+                                     (ombi_mariadb_network_driver | trim | length > 0) and
+                                     (ombi_mariadb_network_subnet is defined) and
+                                     (ombi_mariadb_network_subnet is not none) and
+                                     (ombi_mariadb_network_subnet | trim | length > 0) }}'
+
+################################
+# BINDS
+################################
+
+ombi_mariadb_binds: '{{ ombi_mariadb_binds_config_mapping
+                        + ombi_mariadb_binds_keys_mapping }}'
+
