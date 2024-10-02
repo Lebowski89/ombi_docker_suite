@@ -63,9 +63,9 @@
     name: '{{ ombi_mariadb_network }}'
   register: ombi_mariadb_network_result
 
-- name: Postgres network builtin fail
+- name: Mariadb network builtin fail
   ansible.builtin.fail:
-    msg: Postgres network does not exist nor is it enabled. Ensure the Postgres network variables contain valid entries.
+    msg: Mariadb network does not exist nor is it enabled. Ensure the Mariadb network variables contain valid entries.
   when:
     - not ombi_mariadb_network_is_enabled
     - not ombi_mariadb_network_result.exists
