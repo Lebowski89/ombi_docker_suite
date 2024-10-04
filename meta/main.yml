@@ -1,0 +1,27 @@
+galaxy_info:
+  author: Lebowski89
+  description: Ansible role to automate the full set-up of Ombi - a media request app for Plex and Emby users.
+
+  license: MIT
+
+  min_ansible_version: 2.1
+
+  platforms:
+    - name: Debian
+
+  galaxy_tags:
+    - ombi
+    - docker
+    - servarr
+    - plex
+    - embi
+    - cloudflare
+    - traefik
+    - pvr
+    - music
+    - movies
+    - tv
+    - media
+    - usenet
+    - torrent
+    - bittorrent
