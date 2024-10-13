@@ -1,0 +1,47 @@
+---
+
+################################
+# DOMAIN
+################################
+
+ombi_traefik_subdomain:
+ombi_traefik_domain:
+ombi_traefik_port: '3579'
+
+################################
+# NETWORK
+################################
+
+ombi_traefik_network: 'traefik_proxy'
+ombi_traefik_network_driver: 'bridge'  ## only required if network doesn't exist
+ombi_traefik_network_subnet: ''  ## only required if network doesn't exist
+
+################################
+# TLS
+################################
+
+ombi_traefik_tls_certresolver: 'dns-cloudflare'
+ombi_traefik_tls_options: 'tls-opts@file'
+
+################################
+# ROUTER (HTTP)
+################################
+
+ombi_traefik_http_middlewares: 'globalHeaders@file,redirect-to-https@docker,robotHeaders@file'
+ombi_traefik_http_rule: 'Host(`{{ ombi_traefik_subdomain }}.{{ ombi_traefik_domain }}`)'
+ombi_traefik_http_priority: '20'
+
+################################
+# ROUTER (HTTPS)
+################################
+
+ombi_traefik_https_middlewares: 'globalHeaders@file,secureHeaders@file,robotHeaders@file'
+ombi_traefik_https_rule: 'Host(`{{ ombi_traefik_subdomain }}.{{ ombi_traefik_domain }}`)'
+ombi_traefik_https_priority: '20'
+
+################################
+# CLOUDFLARE
+################################
+
+ombi_traefik_cloudflare_middleware: 'cloudflarewarp@docker'
+

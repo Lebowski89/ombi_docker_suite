@@ -9,13 +9,13 @@
 
 - name: Check if docker gpg key exists
   ansible.builtin.stat:
-    path: '/etc/apt/keyrings/docker.asc'
+    path: /etc/apt/keyrings/docker.asc
   register: docker_gpg_key_result
 
 - name: Remove existing docker gpg key
   when: docker_gpg_key_result.stat.exists
   ansible.builtin.file:
-    path: '/etc/apt/keyrings/docker.asc'
+    path: /etc/apt/keyrings/docker.asc
     state: absent
 
 - name: Create /etc/apt/keyrings directory
@@ -29,7 +29,7 @@
 
 - name: Curl docker gpg key
   ansible.builtin.uri:
-    url: 'https://download.docker.com/linux/debian/gpg'
+    url: https://download.docker.com/linux/debian/gpg
     method: GET
     dest: /etc/apt/keyrings/docker.asc
     follow_redirects: safe

@@ -15,7 +15,7 @@
     mode: '0664'
 
 - name: Remove sqlite database files
-  when: ombi_mariadb_clean_files
+  when: ombi_toggles_clean_files
   ansible.builtin.file:
     path: '{{ ombi_paths_location }}/{{ item }}'
     state: absent

@@ -22,9 +22,9 @@ ombi_mariadb_network_subnet: ''  ## only required if network doesn't exist
 # ENV
 ################################
 
-ombi_mariadb_env_timezone: ''
-ombi_mariadb_env_puid: ''
-ombi_mariadb_env_pgid: ''
+ombi_mariadb_env_timezone: 'Etc/UTC'
+ombi_mariadb_env_puid: '1000'
+ombi_mariadb_env_pgid: '1000'
 
 ################################
 # PORTS
@@ -68,10 +68,3 @@ ombi_mariadb_auth_ombi_db_password_file: 'mariadb_ombi.txt'
 
 ombi_mariadb_database: 'Ombi'
 
-################################
-# CLEAN
-################################
-
-  ## warning: the below toggles will delete any existing sqlite database files in the Ombi appdir.
-
-ombi_mariadb_clean_files: false  # true will delete any existing sqlite database files in the Ombi appdir.

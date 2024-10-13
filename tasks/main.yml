@@ -1,19 +1,11 @@
 ---
 
 ################################
-# CHECK
-################################
-
-- name: Ombi builtin fail
-  when: not ombi_is_enabled
-  ansible.builtin.fail:
-    msg: 'Ombi role is being run but one or multiple Ombi variables are empty. Check the defaults folder.'
-
-################################
 # DEPENDENCIES
 ################################
 
 - name: Install prerequisite apt packages
+  when: ombi_toggles_enable_apt_packages
   ansible.builtin.apt:
     pkg:
       - python3-requests
@@ -31,7 +23,9 @@
 ################################
 
 - name: Apt install docker if required
-  when: ansible_os_family == 'Debian'
+  when:
+    - ombi_toggles_enable_docker_install
+    - ansible_os_family == 'Debian'
   block:
     - name: Gather apt facts
       ansible.builtin.package_facts:
@@ -39,7 +33,7 @@
 
     - name: Include docker install tasks
       when: '"docker-ce" not in ansible_facts.packages'
-      ansible.builtin.include_tasks: 'sub_tasks/docker.yml'
+      ansible.builtin.include_tasks: sub_tasks/docker.yml
 
 ################################
 # CLEAN UP
@@ -108,19 +102,25 @@
 ################################
 
 - name: Include mariadb container tasks
-  when: ombi_mariadb_is_enabled
-  ansible.builtin.include_tasks: 'mariadb/mariadb_container.yml'
+  when:
+    - ombi_toggles_enable_mariadb 
+    - ombi_mariadb_is_enabled
+  ansible.builtin.include_tasks: mariadb/container.yml
 
 - name: Include mariadb database tasks
-  when: ombi_mariadb_is_enabled
-  ansible.builtin.include_tasks: 'mariadb/mariadb_database_json.yml'
+  when:
+    - ombi_toggles_enable_mariadb
+    - ombi_mariadb_is_enabled
+  ansible.builtin.include_tasks: mariadb/database_json.yml
 
 ################################
 # TRAEFIK
 ################################
 
 - name: Conduct traefik tasks
-  when: ombi_traefik_is_enabled
+  when:
+    - ombi_toggles_enable_traefik
+    - ombi_traefik_is_enabled
   block:
     - name: Register traefik network
       community.docker.docker_network_info:
@@ -147,7 +147,9 @@
 ################################
 
 - name: Include cloudflare tasks
-  when: ombi_cloudflare_is_enabled
+  when:
+    - ombi_toggles_enable_cloudflare_dns
+    - ombi_cloudflare_is_enabled
   ansible.builtin.include_tasks: 'sub_tasks/cloudflare.yml'
 
 ################################
@@ -155,7 +157,7 @@
 ################################
 
 - name: Create ombi container
-  when: not ombi_traefik_is_enabled
+  when: (not ombi_toggles_enable_traefik) or (not ombi_traefik_is_enabled)
   community.docker.docker_container:
     name: '{{ ombi_basics_name }}'
     image: '{{ ombi_basics_image_repo }}:{{ ombi_basics_image_tag }}'
@@ -170,7 +172,9 @@
     restart_policy: '{{ ombi_basics_restart_policy }}'
 
 - name: Create ombi traefik container
-  when: ombi_traefik_is_enabled
+  when:
+    - ombi_toggles_enable_traefik
+    - ombi_traefik_is_enabled
   community.docker.docker_container:
     name: '{{ ombi_basics_name }}'
     image: '{{ ombi_basics_image_repo }}:{{ ombi_basics_image_tag }}'

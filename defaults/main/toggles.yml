@@ -1,0 +1,76 @@
+---
+
+  ## enable or disable role features here
+  ## features still need to meet the 'is_enabled' vars conditionals in order to run
+
+################################
+# DEPENDENCIES
+################################
+
+  ## Toggle whether to install required apt packages during role run
+  ## apt packages include: python3-requests, python3-pymysql, python3-lxml
+
+ombi_toggles_enable_apt_packages: true 
+
+################################
+# DOCKER
+################################
+
+  ## Toggle whether to install docker during role run
+  ## Will add dockers gpg key / repository
+  ## apt dependency packages include: ca-certificates, curl
+  ## apt docker packages include: docker-ce, docker-ce-cli, containerd.io, docker-buildx-plugin, docker-compose-plugin
+
+ombi_toggles_enable_docker_install: true
+
+################################
+# MARIADB
+################################
+
+  ## Toggle whether to use Mariadb as a database for ombi
+  ## If enabled, the role will create Ombi's database.json with the required Postgres settings
+  ## The role will then ping for an existing Postgres docker container and then create one if none exists
+  ## This role can create an Ombi postgres database during the Mariadb container deployment
+  ## Note: Unlike my roles that use Postgres, this role will not create an Ombi database on existing Mariadb installs
+
+ombi_toggles_enable_mariadb: true
+
+  ## warning: the below toggles will delete any existing sqlite database files in the ombi appdir.
+
+ombi_toggles_clean_files: true  # true will delete any existing sqlite database files in the ombi appdir.
+
+################################
+# TRAEFIK
+################################
+
+  ## Toggle whether to reverse-proxy ombi behind Traefik (This role doesn't include setting up Traefik)
+  ## Includes joining ombi to the Traefik docker network (or creating one if it doesn't exist)
+  ## Includes defining ombi's Traefik http/https/http-api/https-api router labels
+  ## In this role, the cert-resolver is cloudflare (named: dns-cloudflare) with tls options defined in Traefik's config file (tls-opts@file)
+  ## Various middleware includes: globalHeaders@file,redirect-to-https@docker,robotHeaders@file,secureHeaders@file
+  ## What middleware you use will be up to your needs and how you've set them up and named them within Traefik
+  ## Additional middleware for Authelia, Cloudflare, Theme-park will be defined based on toggles/conditionals (see the toggle section for each)
+
+ombi_toggles_enable_traefik: true
+
+################################
+# CLOUDFLARE
+################################
+
+  ## Toggle whether to use the Ansible 'community.general.cloudflare_dns' module to add a DNS record for ombi and Prometheus (if using metrics)
+  ## By default, this role will add a proxied 'A' record for each, with the use of a cloudflare token (Zone:Read, DNS:Edit)
+  ## It is also possible to use your global api + user email if you desire - this will require changes to the 'community.general.cloudflare_dns' tasks
+  ## See the module documentation on what is required. Personally, I prefer using a dedicated token for Traefik rather than handing over my global API
+  ## This role will remove and add your desired DNS on each run, just in case you've changed your desired sub-domain name, DNS type, or proxy settings
+
+ombi_toggles_enable_cloudflare_dns: true
+
+  ## Toggle whether to include the cloudflarewarp middleware to ombi's Traefik labels
+  ## Requires setting up and defining the cloudflarewarp plugin in Traefik - this role won't do that for you
+  ## See the plugin documentation for what it is and what it can do - https://github.com/BetterCorp/cloudflarewarp
+  ## If enabled, the middleware will be combined with the others you've defined in the defaults variables (See the vars/ombi.yml and vars/prometheus.yml files)
+
+ombi_toggles_enable_cloudflarewarp: true
+
+
+
