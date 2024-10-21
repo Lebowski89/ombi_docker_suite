@@ -1,11 +1,19 @@
 ---
 
 ################################
+# PREFIX
+################################
+
+- name: Set 'role_prefix' variable
+  ansible.builtin.set_fact:
+    role_prefix: 'ombi'
+
+################################
 # DEPENDENCIES
 ################################
 
 - name: Install prerequisite apt packages
-  when: ombi_toggles_enable_apt_packages
+  when: (lookup("vars", role_prefix + "_toggles_enable_apt_packages"))
   ansible.builtin.apt:
     pkg:
       - python3-requests
@@ -24,7 +32,7 @@
 
 - name: Apt install docker if required
   when:
-    - ombi_toggles_enable_docker_install
+    - (lookup("vars", role_prefix + "_toggles_enable_docker_install"))
     - ansible_os_family == 'Debian'
   block:
     - name: Gather apt facts
@@ -39,97 +47,98 @@
 # CLEAN UP
 ################################
 
-- name: Register ombi container
+- name: Register container
   community.docker.docker_container_info:
-    name: '{{ ombi_basics_name }}'
+    name: '{{ lookup("vars", role_prefix + "_basics_name") }}'
   register: ombi_existing_container_result
 
-- name: Remove existing ombi container
+- name: Remove existing container
   when: ombi_existing_container_result.exists
   community.docker.docker_container:
     container_default_behavior: compatibility
-    name: '{{ ombi_basics_name }}'
+    name: '{{ lookup("vars", role_prefix + "_basics_name") }}'
     state: absent
     stop_timeout: 10
-  register: remove_ombi_docker
+  register: ombi_remove_docker_container
   retries: 5
   delay: 10
-  until: remove_ombi_docker is succeeded
+  until: ombi_remove_docker_container is succeeded
 
 ################################
 # BACKEND NETWORK
 ################################
 
 - name: Conduct backend network tasks
-  when: ombi_network_backend_is_enabled
   block:
-    - name: Register ombi backend network
+    - name: Register backend network
       community.docker.docker_network_info:
-        name: '{{ ombi_network_backend }}'
-      register: ombi_net_backend_result
+        name: '{{ lookup("vars", role_prefix + "_network_backend") }}'
+      register: ombi_network_backend_result
 
-    - name: Ombi network backend builtin fail
+    - name: Network backend builtin fail
       ansible.builtin.fail:
-        msg: ombi backend network does not exist nor is it enabled. Ensure the ombi backend network variables contain valid entries.
+        msg: Backend network does not exist nor is it enabled. Ensure the backend network variables contain valid entries.
       when:
-        - not ombi_net_backend_result.exists
-        - not ombi_network_backend_is_enabled
+        - not (lookup("vars", role_prefix + "_network_backend_is_enabled"))
+        - not ombi_network_backend_result.exists
 
-    - name: Create ombi backend network
+    - name: Create backend network
       when:
-        - not ombi_net_backend_result.exists
-        - ombi_network_backend_is_enabled
+        - (lookup("vars", role_prefix + "_network_backend_is_enabled"))
+        - not ombi_network_backend_result.exists
       community.docker.docker_network:
-        name: '{{ ombi_network_backend }}'
-        driver: '{{ ombi_network_backend_driver }}'
+        name: '{{ lookup("vars", role_prefix + "_network_backend") }}'
+        driver: '{{ lookup("vars", role_prefix + "_network_backend_driver") }}'
         ipam_config:
-          - subnet: '{{ ombi_network_backend_subnet }}'
+          - subnet: '{{ lookup("vars", role_prefix + "_network_backend_subnet") }}'
 
 ################################
 # APPDATA
 ################################
 
-- name: Create ombi appdata directory
+- name: Create appdata directory
   ansible.builtin.file:
-    path: '{{ ombi_paths_location }}'
+    path: '{{ lookup("vars", role_prefix + "_paths_location") }}'
     state: directory
-    owner: '{{ ombi_env_puid }}'
-    group: '{{ ombi_env_pgid }}'
+    owner: '{{ lookup("vars", role_prefix + "_env_puid") }}'
+    group: '{{ lookup("vars", role_prefix + "_env_pgid") }}'
     mode: '0755'
 
 ################################
 # MARIADB
 ################################
 
-- name: Include mariadb container tasks
+- name: Conduct mariadb tasks
   when:
-    - ombi_toggles_enable_mariadb 
-    - ombi_mariadb_is_enabled
-  ansible.builtin.include_tasks: mariadb/container.yml
+    - (lookup("vars", role_prefix + "_toggles_enable_mariadb"))
+    - (lookup("vars", role_prefix + "_mariadb_is_enabled"))
+  block:
+    - name: Include mariadb container tasks
+      ansible.builtin.include_tasks: mariadb/container.yml
 
-- name: Include mariadb database tasks
-  when:
-    - ombi_toggles_enable_mariadb
-    - ombi_mariadb_is_enabled
-  ansible.builtin.include_tasks: mariadb/database_json.yml
+    - name: Include mariadb database tasks
+      ansible.builtin.include_tasks: mariadb/database_json.yml
 
 ################################
 # TRAEFIK
 ################################
 
 - name: Conduct traefik tasks
-  when:
-    - ombi_toggles_enable_traefik
-    - ombi_traefik_is_enabled
+  when: (lookup("vars", role_prefix + "_toggles_enable_traefik"))
   block:
+    - name: Traefik builtin fail
+      when: not (lookup("vars", role_prefix + "_traefik_is_enabled"))
+      ansible.builtin.fail:
+        msg: Traefik is toggled on, but the domain varible is empty.
+
     - name: Register traefik network
       community.docker.docker_network_info:
-        name: '{{ ombi_traefik_network }}'
+        name: '{{ lookup("vars", role_prefix + "_traefik_network") }}'
       register: ombi_traefik_network_result
 
     - name: Traefik builtin fail
       when:
-        - not ombi_traefik_network_is_enabled
+        - not (lookup("vars", role_prefix + "_traefik_network_is_enabled"))
         - not ombi_traefik_network_result.exists
       ansible.builtin.fail:
         msg: Traefik network does not exist nor is it enabled. Ensure the Traefik network variables contain valid entries.
@@ -137,54 +146,57 @@
     - name: Create traefik network
       when: not ombi_traefik_network_result.exists
       community.docker.docker_network:
-        name: '{{ ombi_traefik_network }}'
-        driver: '{{ ombi_traefik_network_driver }}'
+        name: '{{ lookup("vars", role_prefix + "_traefik_network") }}'
+        driver: '{{ lookup("vars", role_prefix + "_traefik_network_driver") }}'
         ipam_config:
-          - subnet: '{{ ombi_traefik_network_subnet }}'
+          - subnet: '{{ lookup("vars", role_prefix + "_traefik_network_subnet") }}'
 
 ################################
 # CLOUDFLARE
 ################################
 
-- name: Include cloudflare tasks
-  when:
-    - ombi_toggles_enable_cloudflare_dns
-    - ombi_cloudflare_is_enabled
-  ansible.builtin.include_tasks: 'sub_tasks/cloudflare.yml'
+- name: Perform Cloudflare DNS tasks
+  when: (lookup("vars", role_prefix + "_toggles_enable_cloudflare_dns"))
+  block:
+    - name: Cloudflare builtin fail
+      when: not (lookup("vars", role_prefix + "_cloudflare_is_enabled"))
+      ansible.builtin.fail:
+        msg: Cloudflare DNS is toggled on, but the cloudflare API token variable is empty.
+
+    - name: Include cloudflare tasks
+      ansible.builtin.include_tasks: sub_tasks/cloudflare.yml
 
 ################################
 # CONTAINER
 ################################
 
-- name: Create ombi container
-  when: (not ombi_toggles_enable_traefik) or (not ombi_traefik_is_enabled)
+- name: Create container
+  when: not (lookup("vars", role_prefix + "_toggles_enable_traefik"))
   community.docker.docker_container:
-    name: '{{ ombi_basics_name }}'
-    image: '{{ ombi_basics_image_repo }}:{{ ombi_basics_image_tag }}'
-    networks: '{{ ombi_docker_networks }}'
+    name: '{{ lookup("vars", role_prefix + "_basics_name") }}'
+    image: '{{ lookup("vars", role_prefix + "_basics_image_repo") }}:{{ lookup("vars", role_prefix + "_basics_image_tag") }}'
+    networks: '{{ lookup("vars", role_prefix + "_networks") }}'
     env:
-      PUID: '{{ ombi_env_puid }}'
-      PGID: '{{ ombi_env_pgid }}'
-      TZ: '{{ ombi_env_timezone }}'
+      PUID: '{{ lookup("vars", role_prefix + "_env_puid") }}'
+      PGID: '{{ lookup("vars", role_prefix + "_env_pgid") }}'
+      TZ: '{{ lookup("vars", role_prefix + "_env_timezone") }}'
     ports:
-      - '{{ ombi_ports_host }}:{{ ombi_ports_cont }}'
-    volumes: '{{ ombi_bind_mount }}'
-    restart_policy: '{{ ombi_basics_restart_policy }}'
+      - '{{ lookup("vars", role_prefix + "_ports_host") }}:{{ lookup("vars", role_prefix + "_ports_cont") }}'
+    volumes: '{{ lookup("vars", role_prefix + "_bind_mount") }}'
+    restart_policy: '{{ lookup("vars", role_prefix + "_basics_restart_policy") }}'
 
-- name: Create ombi traefik container
-  when:
-    - ombi_toggles_enable_traefik
-    - ombi_traefik_is_enabled
+- name: Create traefik container
+  when: (lookup("vars", role_prefix + "_toggles_enable_traefik"))
   community.docker.docker_container:
-    name: '{{ ombi_basics_name }}'
-    image: '{{ ombi_basics_image_repo }}:{{ ombi_basics_image_tag }}'
-    networks: '{{ ombi_docker_networks }}'
+    name: '{{ lookup("vars", role_prefix + "_basics_name") }}'
+    image: '{{ lookup("vars", role_prefix + "_basics_image_repo") }}:{{ lookup("vars", role_prefix + "_basics_image_tag") }}'
+    networks: '{{ lookup("vars", role_prefix + "_networks") }}'
     env:
-      PUID: '{{ ombi_env_puid }}'
-      PGID: '{{ ombi_env_pgid }}'
-      TZ: '{{ ombi_env_timezone }}'
-    labels: '{{ ombi_traefik_labels }}'
+      PUID: '{{ lookup("vars", role_prefix + "_env_puid") }}'
+      PGID: '{{ lookup("vars", role_prefix + "_env_pgid") }}'
+      TZ: '{{ lookup("vars", role_prefix + "_env_timezone") }}'
+    labels: '{{ lookup("vars", role_prefix + "_labels") }}'
     ports:
-      - '{{ ombi_ports_host }}:{{ ombi_ports_cont }}'
-    volumes: '{{ ombi_bind_mount }}'
-    restart_policy: '{{ ombi_basics_restart_policy }}'
+      - '{{ lookup("vars", role_prefix + "_ports_host") }}:{{ lookup("vars", role_prefix + "_ports_cont") }}'
+    volumes: '{{ lookup("vars", role_prefix + "_bind_mount") }}'
+    restart_policy: '{{ lookup("vars", role_prefix + "_basics_restart_policy") }}'

@@ -15,7 +15,7 @@ ombi_mariadb_basics_restart_policy: 'unless-stopped'
 ################################
 
 ombi_mariadb_network: 'mariadb'
-ombi_mariadb_network_driver: ''  ## only required if network doesn't exist
+ombi_mariadb_network_driver: 'bridge'  ## only required if network doesn't exist
 ombi_mariadb_network_subnet: ''  ## only required if network doesn't exist
 
 ################################
@@ -39,8 +39,7 @@ ombi_mariadb_ports_cont: '3306'
 
 ombi_mariadb_paths_folder: '{{ ombi_mariadb_basics_name }}'  # name of postgres folder
 ombi_mariadb_paths_location: '/opt/{{ ombi_mariadb_paths_folder }}' # path of postgres folder
-ombi_mariadb_paths_keys_folder: 'keys'
-ombi_mariadb_paths_keys_location: '{{ ombi_mariadb_paths_location }}/{{ ombi_mariadb_paths_keys_folder }}'
+ombi_mariadb_paths_keys_location: '{{ ombi_mariadb_paths_location }}/keys'
 
 ################################
 # BINDS
@@ -67,4 +66,3 @@ ombi_mariadb_auth_ombi_db_password_file: 'mariadb_ombi.txt'
 ################################
 
 ombi_mariadb_database: 'Ombi'
-

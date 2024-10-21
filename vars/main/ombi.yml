@@ -11,13 +11,13 @@ ombi_network_mariadb_bind:
 ombi_network_traefik_bind:
   - name: '{{ ombi_traefik_network }}'
 
-ombi_docker_networks: '{{ ombi_network_default_bind
-                          + (ombi_network_mariadb_bind
-                             if ombi_toggles_enable_mariadb
-                             else [])
-                          + (ombi_network_traefik_bind
-                             if ombi_toggles_enable_traefik
-                             else []) }}'
+ombi_networks: '{{ ombi_network_default_bind
+                   + (ombi_network_mariadb_bind
+                      if ombi_toggles_enable_mariadb
+                      else [])
+                   + (ombi_network_traefik_bind
+                      if ombi_toggles_enable_traefik
+                      else []) }}'
 
 ombi_network_backend_is_enabled: '{{ (ombi_network_backend_driver is defined) and
                                      (ombi_network_backend_driver is not none) and
@@ -25,6 +25,14 @@ ombi_network_backend_is_enabled: '{{ (ombi_network_backend_driver is defined) an
                                      (ombi_network_backend_subnet is defined) and
                                      (ombi_network_backend_subnet is not none) and
                                      (ombi_network_backend_subnet | trim | length > 0) }}'
+
+################################
+# LABELS
+################################
+
+ombi_labels: '{{ ombi_traefik_labels_default
+                 | combine(ombi_traefik_labels_router)
+                 | combine(ombi_traefik_labels_router_secure) }}'
 
 ################################
 # TRAEFIK
@@ -35,7 +43,6 @@ ombi_traefik_labels_default:
   traefik.docker.network: '{{ ombi_traefik_network }}'
 
 ombi_traefik_labels_router:
-  ## http
   traefik.http.routers.ombi-rtr.entrypoints: 'http'
   traefik.http.routers.ombi-rtr.rule: '{{ ombi_traefik_http_rule }}'
   traefik.http.routers.ombi-rtr.middlewares: '{{ ombi_traefik_http_middlewares_bind }}'
@@ -44,7 +51,6 @@ ombi_traefik_labels_router:
   traefik.http.services.ombi-rtr-svc.loadbalancer.server.port: '{{ ombi_traefik_port }}'
 
 ombi_traefik_labels_router_secure:
-  ## https
   traefik.http.routers.ombi-rtr-secure.entrypoints: 'https'
   traefik.http.routers.ombi-rtr-secure.rule: '{{ ombi_traefik_https_rule }}'
   traefik.http.routers.ombi-rtr-secure.middlewares: '{{ ombi_traefik_https_middlewares_bind }}'
@@ -53,10 +59,6 @@ ombi_traefik_labels_router_secure:
   traefik.http.routers.ombi-rtr-secure.tls.certresolver: '{{ ombi_traefik_tls_certresolver }}'
   traefik.http.routers.ombi-rtr-secure.tls.options: '{{ ombi_traefik_tls_options }}'
   traefik.http.services.ombi-rtr-secure-svc.loadbalancer.server.port: '{{ ombi_traefik_port }}'
-
-ombi_traefik_labels: '{{ ombi_traefik_labels_default
-                         | combine(ombi_traefik_labels_router)
-                         | combine(ombi_traefik_labels_router_secure) }}'
 
 ombi_traefik_is_enabled: '{{ (ombi_traefik_domain is defined) and
                              (ombi_traefik_domain is not none) and
@@ -72,19 +74,22 @@ ombi_traefik_network_is_enabled: '{{ (ombi_traefik_network_driver is defined) an
 ombi_traefik_http_middlewares_bind: '{{ ombi_traefik_http_middlewares
                                         + (",cloudflarewarp@docker"
                                            if (ombi_toggles_enable_cloudflarewarp)
+                                           else "")
+                                        + (",authelia@docker"
+                                           if (ombi_toggles_enable_authelia_middleware)
                                            else "") }}'
 
 ombi_traefik_https_middlewares_bind: '{{ ombi_traefik_https_middlewares
                                          + (",cloudflarewarp@docker"
                                             if (ombi_toggles_enable_cloudflarewarp)
+                                            else "")
+                                         + (",authelia@docker"
+                                            if (ombi_toggles_enable_authelia_middleware)
                                             else "") }}'
 
 ################################
 # CLOUDFLARE
 ################################
-
-ombi_cloudflare_record: '{{ ombi_traefik_subdomain }}'
-ombi_cloudflare_zone: '{{ ombi_traefik_domain }}'
 
 ombi_cloudflare_is_enabled: '{{ (ombi_cloudflare_api_token is defined) and
                                 (ombi_cloudflare_api_token is not none) and

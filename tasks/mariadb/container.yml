@@ -6,10 +6,10 @@
 
 - name: Create mariadb appdata directory
   ansible.builtin.file:
-    path: '{{ ombi_mariadb_paths_location }}'
+    path: '{{ lookup("vars", role_prefix + "_mariadb_paths_location") }}'
     state: directory
-    owner: '{{ ombi_mariadb_env_puid }}'
-    group: '{{ ombi_mariadb_env_pgid }}'
+    owner: '{{ lookup("vars", role_prefix + "_mariadb_env_puid") }}'
+    group: '{{ lookup("vars", role_prefix + "_mariadb_env_pgid") }}'
     mode: '0755'
 
 ################################
@@ -18,39 +18,39 @@
 
 - name: Create mariadb keys directory
   ansible.builtin.file:
-    path: '{{ ombi_mariadb_paths_keys_location }}'
+    path: '{{ lookup("vars", role_prefix + "_mariadb_paths_keys_location") }}'
     state: directory
-    owner: '{{ ombi_mariadb_env_puid }}'
-    group: '{{ ombi_mariadb_env_pgid }}'
+    owner: '{{ lookup("vars", role_prefix + "_mariadb_env_puid") }}'
+    group: '{{ lookup("vars", role_prefix + "_mariadb_env_pgid") }}'
     mode: '0755'
 
 - name: Check if mariadb_root.txt exists
   ansible.builtin.stat:
-    path: '{{ ombi_mariadb_paths_keys_location }}/{{ ombi_mariadb_auth_root_password_file }}'
+    path: '{{ lookup("vars", role_prefix + "_mariadb_paths_keys_location") }}/{{ lookup("vars", role_prefix + "_mariadb_auth_root_password_file") }}'
   register: ombi_mariadb_root_txt
 
-- name: Insert mariadb root password into password file
+- name: Insert mariadb root password into file
   when: not ombi_mariadb_root_txt.stat.exists
   ansible.builtin.lineinfile:
-    path: '{{ ombi_mariadb_paths_keys_location }}/{{ ombi_mariadb_auth_root_password_file }}'
-    line: '{{ ombi_mariadb_auth_root_password }}'
-    owner: '{{ ombi_mariadb_env_puid }}'
-    group: '{{ ombi_mariadb_env_pgid }}'
+    path: '{{ lookup("vars", role_prefix + "_mariadb_paths_keys_location") }}/{{ lookup("vars", role_prefix + "_mariadb_auth_root_password_file") }}'
+    line: '{{ lookup("vars", role_prefix + "_mariadb_auth_root_password") }}'
+    owner: '{{ lookup("vars", role_prefix + "_mariadb_env_puid") }}'
+    group: '{{ lookup("vars", role_prefix + "_mariadb_env_pgid") }}'
     mode: '0644'
     create: true
 
 - name: Check if mariadb_ombi.txt exists
   ansible.builtin.stat:
-    path: '{{ ombi_mariadb_paths_keys_location }}/{{ ombi_mariadb_auth_ombi_db_password_file }}'
-  register: ombi_mariadb_ombi_txt
+    path: '{{ lookup("vars", role_prefix + "_mariadb_paths_keys_location") }}/{{ lookup("vars", role_prefix + "_mariadb_auth_ombi_db_password_file") }}'
+  register: ombi_mariadb_db_key_txt
 
-- name: Insert mariadb ombi password into password file
-  when: not ombi_mariadb_ombi_txt.stat.exists
+- name: Insert mariadb db password into file
+  when: not ombi_mariadb_db_key_txt.stat.exists
   ansible.builtin.lineinfile:
-    path: '{{ ombi_mariadb_paths_keys_location }}/{{ ombi_mariadb_auth_ombi_db_password_file }}'
-    line: '{{ ombi_mariadb_auth_ombi_db_password }}'
-    owner: '{{ ombi_mariadb_env_puid }}'
-    group: '{{ ombi_mariadb_env_pgid }}'
+    path: '{{ lookup("vars", role_prefix + "_mariadb_paths_keys_location") }}/{{ lookup("vars", role_prefix + "_mariadb_auth_ombi_db_password_file") }}'
+    line: '{{ lookup("vars", role_prefix + "mariadb_auth_ombi_db_password") }}'
+    owner: '{{ lookup("vars", role_prefix + "_mariadb_env_puid") }}'
+    group: '{{ lookup("vars", role_prefix + "_mariadb_env_pgid") }}'
     mode: '0644'
     create: true
 
@@ -60,23 +60,23 @@
 
 - name: Register mariadb network
   community.docker.docker_network_info:
-    name: '{{ ombi_mariadb_network }}'
+    name: '{{ lookup("vars", role_prefix + "_mariadb_network") }}'
   register: ombi_mariadb_network_result
 
 - name: Mariadb network builtin fail
   ansible.builtin.fail:
     msg: Mariadb network does not exist nor is it enabled. Ensure the Mariadb network variables contain valid entries.
   when:
-    - not ombi_mariadb_network_is_enabled
+    - not (lookup("vars", role_prefix + "_mariadb_network_is_enabled"))
     - not ombi_mariadb_network_result.exists
 
 - name: Create mariadb network
   when: not ombi_mariadb_network_result.exists
   community.docker.docker_network:
-    name: '{{ ombi_mariadb_network }}'
-    driver: '{{ ombi_mariadb_network_driver }}'
+    name: '{{ lookup("vars", role_prefix + "_mariadb_network") }}'
+    driver: '{{ lookup("vars", role_prefix + "_mariadb_network_driver") }}'
     ipam_config:
-      - subnet: '{{ ombi_mariadb_network_subnet }}'
+      - subnet: '{{ lookup("vars", role_prefix + "_mariadb_network_subnet") }}'
 
 ################################
 # CONTAINER
@@ -84,32 +84,32 @@
 
 - name: Register mariadb container
   community.docker.docker_container_info:
-    name: '{{ ombi_mariadb_basics_name }}'
+    name: '{{ lookup("vars", role_prefix + "_mariadb_basics_name") }}'
   register: ombi_mariadb_container_result
 
 - name: Create mariadb container
   when: not ombi_mariadb_container_result.exists
   community.docker.docker_container:
-    name: '{{ ombi_mariadb_basics_name }}'
-    image: '{{ ombi_mariadb_basics_image_repo }}:{{ ombi_mariadb_basics_image_tag }}'
+    name: '{{ lookup("vars", role_prefix + "_mariadb_basics_name") }}'
+    image: '{{ lookup("vars", role_prefix + "_mariadb_basics_image_repo") }}:{{ lookup("vars", role_prefix + "_mariadb_basics_image_tag") }}'
     networks:
-      - name: '{{ ombi_mariadb_network }}'
+      - name: '{{ lookup("vars", role_prefix + "_mariadb_network") }}'
     env:
-      PUID: '{{ ombi_mariadb_env_puid }}'
-      PGID: '{{ ombi_mariadb_env_pgid }}'
-      TZ: '{{ ombi_mariadb_env_timezone }}'
-      MARIADB_ROOT_PASSWORD_FILE: '/keys/{{ ombi_mariadb_auth_root_password_file }}'
-      MARIADB_DATABASE: '{{ ombi_mariadb_database }}'
-      MARIADB_USER: '{{ ombi_mariadb_auth_ombi_db_user }}'
-      MARIADB_PASSWORD_FILE: '/keys/{{ ombi_mariadb_auth_ombi_db_password_file }}'
+      PUID: '{{ lookup("vars", role_prefix + "_mariadb_env_puid") }}'
+      PGID: '{{ lookup("vars", role_prefix + "_mariadb_env_pgid") }}'
+      TZ: '{{ lookup("vars", role_prefix + "_mariadb_env_timezone") }}'
+      MARIADB_ROOT_PASSWORD_FILE: '/keys/{{ lookup("vars", role_prefix + "_mariadb_auth_root_password_file") }}'
+      MARIADB_DATABASE: '{{ lookup("vars", role_prefix + "_mariadb_database") }}'
+      MARIADB_USER: '{{ lookup("vars", role_prefix + "_mariadb_auth_ombi_db_user") }}'
+      MARIADB_PASSWORD_FILE: '/keys/{{ lookup("vars", role_prefix + "_mariadb_auth_ombi_db_password_file") }}'
     ports:
-      - '{{ ombi_mariadb_ports_host }}:{{ ombi_mariadb_ports_cont }}'
-    volumes: '{{ ombi_mariadb_binds }}'
-    restart_policy: '{{ ombi_mariadb_basics_restart_policy }}'
+      - '{{ lookup("vars", role_prefix + "_mariadb_ports_host") }}:{{ lookup("vars", role_prefix + "_mariadb_ports_cont") }}'
+    volumes: '{{ lookup("vars", role_prefix + "_mariadb_binds") }}'
+    restart_policy: '{{ lookup("vars", role_prefix + "_mariadb_basics_restart_policy") }}'
 
 - name: Make sure the mariadb container is started
   community.docker.docker_container:
-    name: '{{ ombi_mariadb_basics_name }}'
+    name: '{{ lookup("vars", role_prefix + "_mariadb_basics_name") }}'
     state: started
   register: start_ombi_mariadb_docker
   retries: 5

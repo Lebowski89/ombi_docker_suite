@@ -2,22 +2,22 @@
 
 - name: Remove existing database.json
   ansible.builtin.file:
-    path: '{{ ombi_paths_location }}/database.json'
+    path: '{{ lookup("vars", role_prefix + "_paths_location") }}/database.json'
     state: absent
 
 - name: Import ombi database.json
   ansible.builtin.template:
     src: '{{ role_path }}/templates/database.json.j2'
-    dest: '{{ ombi_paths_location }}/database.json'
+    dest: '{{ lookup("vars", role_prefix + "_paths_location") }}/database.json'
     force: true
-    owner: '{{ ombi_env_puid }}'
-    group: '{{ ombi_env_pgid }}'
+    owner: '{{ lookup("vars", role_prefix + "_env_puid") }}'
+    group: '{{ lookup("vars", role_prefix + "_env_pgid") }}'
     mode: '0664'
 
 - name: Remove sqlite database files
-  when: ombi_toggles_clean_files
+  when: (lookup("vars", role_prefix + "_toggles_clean_files"))
   ansible.builtin.file:
-    path: '{{ ombi_paths_location }}/{{ item }}'
+    path: '{{ lookup("vars", role_prefix + "_paths_location") }}/{{ item }}'
     state: absent
   loop:
     - Ombi.db

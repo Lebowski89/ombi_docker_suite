@@ -14,7 +14,7 @@ ombi_basics_restart_policy: 'unless-stopped'
 ################################
 
 ombi_network_backend: 'proxy'  ## allows backend docker communication between ombi and companion apps
-ombi_network_backend_driver: ''  ## only required if network doesn't exist
+ombi_network_backend_driver: 'bridge'  ## only required if network doesn't exist
 ombi_network_backend_subnet: ''  ## only required if network doesn't exist
 
 ################################
@@ -45,5 +45,3 @@ ombi_paths_location: '/opt/{{ ombi_paths_folder }}'
 
 ombi_bind_mount:
   - '{{ ombi_paths_location }}:/config'
-
-

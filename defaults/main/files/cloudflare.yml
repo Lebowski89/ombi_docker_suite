@@ -6,4 +6,4 @@
 
 ombi_cloudflare_record_type: 'A'  ## A (IPV4), AAAA (IPV6), CNAME, etc
 ombi_cloudflare_proxy: 'true'  ## true for cloudflare DNS SSL
-ombi_cloudflare_api_token:
+ombi_cloudflare_api_token: ''

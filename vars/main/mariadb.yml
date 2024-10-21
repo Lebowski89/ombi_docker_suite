@@ -34,4 +34,3 @@ ombi_mariadb_network_is_enabled: '{{ (ombi_mariadb_network_driver is defined) an
 
 ombi_mariadb_binds: '{{ ombi_mariadb_binds_config_mapping
                         + ombi_mariadb_binds_keys_mapping }}'
-

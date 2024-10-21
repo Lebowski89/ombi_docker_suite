@@ -4,9 +4,9 @@
 # DOMAIN
 ################################
 
-ombi_traefik_subdomain:
-ombi_traefik_domain:
-ombi_traefik_port: '3579'
+ombi_traefik_subdomain: '{{ ombi_basics_name }}'
+ombi_traefik_domain: ''
+ombi_traefik_port: '{{ ombi_ports_cont }}'
 
 ################################
 # NETWORK
@@ -27,7 +27,7 @@ ombi_traefik_tls_options: 'tls-opts@file'
 # ROUTER (HTTP)
 ################################
 
-ombi_traefik_http_middlewares: 'globalHeaders@file,redirect-to-https@docker,robotHeaders@file'
+ombi_traefik_http_middlewares: 'globalHeaders@file,redirect-to-https@docker,autodetect@docker,gzip@docker,robotHeaders@file'
 ombi_traefik_http_rule: 'Host(`{{ ombi_traefik_subdomain }}.{{ ombi_traefik_domain }}`)'
 ombi_traefik_http_priority: '20'
 
@@ -35,13 +35,6 @@ ombi_traefik_http_priority: '20'
 # ROUTER (HTTPS)
 ################################
 
-ombi_traefik_https_middlewares: 'globalHeaders@file,secureHeaders@file,robotHeaders@file'
+ombi_traefik_https_middlewares: 'globalHeaders@file,secureHeaders@file,autodetect@docker,gzip@docker,robotHeaders@file,hsts@file'
 ombi_traefik_https_rule: 'Host(`{{ ombi_traefik_subdomain }}.{{ ombi_traefik_domain }}`)'
 ombi_traefik_https_priority: '20'
-
-################################
-# CLOUDFLARE
-################################
-
-ombi_traefik_cloudflare_middleware: 'cloudflarewarp@docker'
-
