@@ -12,16 +12,16 @@ ombi_traefik_port: '{{ ombi_ports_cont }}'
 # NETWORK
 ################################
 
-ombi_traefik_network: 'traefik_proxy'
-ombi_traefik_network_driver: 'bridge'  ## only required if network doesn't exist
-ombi_traefik_network_subnet: ''  ## only required if network doesn't exist
+traefik_network: 'traefik_proxy'
+traefik_network_driver: 'bridge'  ## only required if network doesn't exist
+traefik_network_subnet: ''  ## only required if network doesn't exist
 
 ################################
 # TLS
 ################################
 
-ombi_traefik_tls_certresolver: 'dns-cloudflare'
-ombi_traefik_tls_options: 'tls-opts@file'
+traefik_tls_certresolver: 'dns-cloudflare'
+traefik_tls_options: 'tls-opts@file'
 
 ################################
 # ROUTER (HTTP)

@@ -21,7 +21,6 @@ ombi_network_backend_subnet: ''  ## only required if network doesn't exist
 # ENV
 ################################
 
-ombi_env_timezone: 'Etc/UTC'
 ombi_env_puid: '1000'
 ombi_env_pgid: '1000'
 

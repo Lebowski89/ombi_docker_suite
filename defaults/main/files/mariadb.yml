@@ -4,65 +4,64 @@
 # BASICS
 ################################
 
-ombi_mariadb_basics_host: ''  # machine address for ansible mariadb module to create database
-ombi_mariadb_basics_name: 'mariadb'
-ombi_mariadb_basics_image_repo: 'mariadb'
-ombi_mariadb_basics_image_tag: 'latest'
-ombi_mariadb_basics_restart_policy: 'unless-stopped'
+mariadb_basics_host: ''  # machine address for ansible mariadb module to create database
+mariadb_basics_name: 'mariadb'
+mariadb_basics_image_repo: 'mariadb'
+mariadb_basics_image_tag: 'latest'
+mariadb_basics_restart_policy: 'unless-stopped'
 
 ################################
 # NETWORK
 ################################
 
-ombi_mariadb_network: 'mariadb'
-ombi_mariadb_network_driver: 'bridge'  ## only required if network doesn't exist
-ombi_mariadb_network_subnet: ''  ## only required if network doesn't exist
+mariadb_network: 'mariadb'
+mariadb_network_driver: 'bridge'  ## only required if network doesn't exist
+mariadb_network_subnet: ''  ## only required if network doesn't exist
 
 ################################
 # ENV
 ################################
 
-ombi_mariadb_env_timezone: 'Etc/UTC'
-ombi_mariadb_env_puid: '1000'
-ombi_mariadb_env_pgid: '1000'
+mariadb_env_puid: '1000'
+mariadb_env_pgid: '1000'
 
 ################################
 # PORTS
 ################################
 
-ombi_mariadb_ports_host: '3306'
-ombi_mariadb_ports_cont: '3306'
+mariadb_ports_host: '3306'
+mariadb_ports_cont: '3306'
 
 ################################
 # PATHS
 ################################
 
-ombi_mariadb_paths_folder: '{{ ombi_mariadb_basics_name }}'  # name of postgres folder
-ombi_mariadb_paths_location: '/opt/{{ ombi_mariadb_paths_folder }}' # path of postgres folder
-ombi_mariadb_paths_keys_location: '{{ ombi_mariadb_paths_location }}/keys'
+mariadb_paths_folder: '{{ ombi_mariadb_basics_name }}'  # name of postgres folder
+mariadb_paths_location: '/opt/{{ mariadb_paths_folder }}' # path of postgres folder
+mariadb_paths_keys_location: '{{ mariadb_paths_location }}/keys'
 
 ################################
 # BINDS
 ################################
 
-ombi_mariadb_binds_config_mapping:
-  - '{{ ombi_mariadb_paths_location }}:/var/lib/mysql'
+mariadb_binds_config_mapping:
+  - '{{ mariadb_paths_location }}:/var/lib/mysql'
 
-ombi_mariadb_binds_keys_mapping:
-  - '{{ ombi_mariadb_paths_keys_location }}:/keys'
+mariadb_binds_keys_mapping:
+  - '{{ mariadb_paths_keys_location }}:/keys'
 
 ################################
 # AUTH
 ################################
 
-ombi_mariadb_auth_root_password: ''
-ombi_mariadb_auth_root_password_file: 'mariadb_root.txt'
-ombi_mariadb_auth_ombi_db_user: ''
-ombi_mariadb_auth_ombi_db_password: ''
-ombi_mariadb_auth_ombi_db_password_file: 'mariadb_ombi.txt'
+mariadb_auth_root_password: ''
+mariadb_auth_root_password_file: 'mariadb_root.txt'
 
 ################################
 # DATABASE
 ################################
 
-ombi_mariadb_database: 'Ombi'
+mariadb_ombi_database: 'Ombi'
+mariadb_ombi_db_user: ''
+mariadb_ombi_db_password: ''
+mariadb_ombi_db_password_file: 'mariadb_ombi.txt'

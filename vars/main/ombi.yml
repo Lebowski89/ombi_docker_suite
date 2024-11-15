@@ -7,9 +7,9 @@
 ombi_network_default_bind:
   - name: '{{ ombi_network_backend }}'
 ombi_network_mariadb_bind:
-  - name: '{{ ombi_mariadb_network }}'
+  - name: '{{ mariadb_network }}'
 ombi_network_traefik_bind:
-  - name: '{{ ombi_traefik_network }}'
+  - name: '{{ traefik_network }}'
 
 ombi_networks: '{{ ombi_network_default_bind
                    + (ombi_network_mariadb_bind
@@ -40,7 +40,7 @@ ombi_labels: '{{ ombi_traefik_labels_default
 
 ombi_traefik_labels_default:
   traefik.enable: 'true'
-  traefik.docker.network: '{{ ombi_traefik_network }}'
+  traefik.docker.network: '{{ traefik_network }}'
 
 ombi_traefik_labels_router:
   traefik.http.routers.ombi-rtr.entrypoints: 'http'
@@ -56,20 +56,20 @@ ombi_traefik_labels_router_secure:
   traefik.http.routers.ombi-rtr-secure.middlewares: '{{ ombi_traefik_https_middlewares_bind }}'
   traefik.http.routers.ombi-rtr-secure.priority: '{{ ombi_traefik_https_priority }}'
   traefik.http.routers.ombi-rtr-secure.service: 'ombi-rtr-secure-svc'
-  traefik.http.routers.ombi-rtr-secure.tls.certresolver: '{{ ombi_traefik_tls_certresolver }}'
-  traefik.http.routers.ombi-rtr-secure.tls.options: '{{ ombi_traefik_tls_options }}'
+  traefik.http.routers.ombi-rtr-secure.tls.certresolver: '{{ traefik_tls_certresolver }}'
+  traefik.http.routers.ombi-rtr-secure.tls.options: '{{ traefik_tls_options }}'
   traefik.http.services.ombi-rtr-secure-svc.loadbalancer.server.port: '{{ ombi_traefik_port }}'
 
 ombi_traefik_is_enabled: '{{ (ombi_traefik_domain is defined) and
                              (ombi_traefik_domain is not none) and
                              (ombi_traefik_domain | trim | length > 0) }}'
 
-ombi_traefik_network_is_enabled: '{{ (ombi_traefik_network_driver is defined) and
-                                     (ombi_traefik_network_driver is not none) and
-                                     (ombi_traefik_network_driver | trim | length > 0) and
-                                     (ombi_traefik_network_subnet is defined) and
-                                     (ombi_traefik_network_subnet is not none) and
-                                     (ombi_traefik_network_subnet | trim | length > 0) }}'
+traefik_network_is_enabled: '{{ (traefik_network_driver is defined) and
+                                (traefik_network_driver is not none) and
+                                (traefik_network_driver | trim | length > 0) and
+                                (traefik_network_subnet is defined) and
+                                (traefik_network_subnet is not none) and
+                                (traefik_network_subnet | trim | length > 0) }}'
 
 ombi_traefik_http_middlewares_bind: '{{ ombi_traefik_http_middlewares
                                         + (",cloudflarewarp@docker"

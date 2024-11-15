@@ -2,26 +2,25 @@
 
 - name: Remove existing CNAME DNS record
   community.general.cloudflare_dns:
-    api_token: '{{ lookup("vars", role_prefix + "_cloudflare_api_token") }}'
-    zone: '{{ lookup("vars", role_prefix + "_traefik_domain") }}'
+    api_token: '{{ ombi_cloudflare_api_token }}'
+    zone: '{{ ombi_traefik_domain }}'
     state: absent
     type: CNAME
-    record: '{{ lookup("vars", role_prefix + "_traefik_subdomain") }}'
+    record: '{{ ombi_traefik_subdomain }}'
 
 - name: Remove existing A DNS record
   community.general.cloudflare_dns:
-    api_token: '{{ lookup("vars", role_prefix + "_cloudflare_api_token") }}'
-    zone: '{{ lookup("vars", role_prefix + "_traefik_domain") }}'
+    api_token: '{{ ombi_cloudflare_api_token }}'
+    zone: '{{ ombi_traefik_domain }}'
     state: absent
     type: A
-    record: '{{ lookup("vars", role_prefix + "_traefik_subdomain") }}'
+    record: '{{ ombi_traefik_subdomain }}'
 
 - name: Get public ip for DNS tasks
   block:
     - name: Get public IP
       community.general.ipify_facts:
         timeout: 20
-      delegate_to: localhost
       register: public_ip
 
     - name: Public IP output
@@ -30,14 +29,14 @@
 
 - name: Add DNS record
   community.general.cloudflare_dns:
-    api_token: '{{ lookup("vars", role_prefix + "_cloudflare_api_token") }}'
-    zone: '{{ lookup("vars", role_prefix + "_traefik_domain") }}'
+    api_token: '{{ ombi_cloudflare_api_token }}'
+    zone: '{{ ombi_traefik_domain }}'
     state: present
     solo: true
-    proxied: '{{ lookup("vars", role_prefix + "_cloudflare_proxy") }}'
-    type: '{{ lookup("vars", role_prefix + "_cloudflare_record_type") }}'
+    proxied: '{{ ombi_cloudflare_proxy }}'
+    type: '{{ ombi_cloudflare_record_type }}'
     value: '{{ ipify_public_ip }}' 
-    record: '{{ lookup("vars", role_prefix + "_traefik_subdomain") }}'
+    record: '{{ ombi_traefik_subdomain }}'
   register: ombi_cloudflare_record_creation_status
 
 - name: Tasks on success
@@ -45,8 +44,8 @@
   block:
     - name: Set 'dns_record_print' variable
       ansible.builtin.set_fact:
-        ombi_cloudflare_record_print: '{{ (lookup("vars", role_prefix + "_traefik_subdomain") == lookup("vars", role_prefix + "_traefik_domain")) | ternary(lookup("vars", role_prefix + "_traefik_domain"), lookup("vars", role_prefix + "_traefik_subdomain") + "." + lookup("vars", role_prefix + "_traefik_domain")) }}'
+        ombi_cloudflare_record_print: '{{ (ombi_traefik_subdomain == ombi_traefik_domain) | ternary(ombi_traefik_domain, ombi_traefik_subdomain + "." + ombi_traefik_domain) }}'
 
     - name: Display DNS record creation status
       ansible.builtin.debug:
-        msg: 'DNS A Record for "{{ ombi_cloudflare_record_print }}" set to "{{ ipify_public_ip }}" was added. Proxy: {{ lookup("vars", role_prefix + "_cloudflare_proxy") }}'
+        msg: 'DNS A Record for "{{ ombi_cloudflare_record_print }}" set to "{{ ipify_public_ip }}" was added. Proxy: {{ ombi_cloudflare_proxy }}'
